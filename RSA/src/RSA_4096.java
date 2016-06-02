@@ -1,19 +1,20 @@
 import java.util.Scanner;
 import java.util.Random;
+import java.math.BigInteger;
 
 public class RSA_4096 {
 
 	public static void main(String[] args) {
 
 		// 변수 초기값 설정
-		int M = 0;			// 메세지 평문, M < n 의 조건을 만족해야 함.
-		int C = 0;			// 암호문
-		int n = 0;			// * 4096bits 크기를 갖는 n, n=p*q. biginteger로 변환해야 함 *
-		int p = 0;			// 임의의 소수
-		int q = 0;			// 임의의 소수
-		int pi = 0;			// 오일러 파이함수 pi = (p-1)*(q-1)
-		int e = 0;			// 공개키
-		int d = 0;			// 개인키
+		int M = 0;									// 메세지 평문, M < n 의 조건을 만족해야 함. 테스트로 2-100 사이 정수로 함
+		int C = 0;									// 암호문
+		BigInteger n = new BigInteger("0");		// 4096bits 크기를 갖는 변수 n
+		BigInteger p = new BigInteger("0");	// 임의의 소수 변수 p
+		BigInteger q = new BigInteger("0");	// 임의의 소수 변수 q
+		BigInteger pi = new BigInteger("0");	// 오일러 파이함수 pi
+		int e = 0;										// 공개키
+		int d = 0;									// 개인키
 		
 
 		Scanner scan = new Scanner(System.in); 
@@ -40,8 +41,8 @@ public class RSA_4096 {
 			// 1. 서로 다른 소수 p, q를 생성한다
 			while(true)
 			{
-				p = getRandomPrimeNum(2, 100);
-				q = getRandomPrimeNum(2, 100);
+				p = getRandomPrimeNum();
+				q = getRandomPrimeNum();
 				
 				n = p * q;
 				pi = (p-1)*(q-1);
@@ -89,17 +90,20 @@ public class RSA_4096 {
 	 * 예를 들어, random 값의 검색범위가 2 ~ 100 일때
 	 * random 값 result = 0.2*(100-2) + 2 의 형태로 계산된다.
 	 */
-	public static int getRandomPrimeNum(int startNum, int endNum)
+	public static BigInteger getRandomPrimeNum()
 	{
+		BigInteger maxint = new BigInteger("2");
+		maxint = maxint.pow(2048);
+		
+		BigInteger result = new BigInteger("0");
 		Random rn = new Random();
-		int intRange = endNum - startNum;
 		int k;
 
 		// 소수를 찾을 때까지 반복
 		while(true)
 		{
 			// random 값 선택
-			int result = (int)(rn.nextDouble() * intRange + startNum);
+			result = maxint.multiply(BigInteger.valueOf( rn.nextLong()));
 
 			// 2부터 차례로 ++ 하여 나누기 시도, 나머지가 0인 경우는 소수가 아님
 			for(k=2; k <= result-1; k++)
