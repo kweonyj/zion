@@ -13,7 +13,7 @@ public class RSA_4096 {
 		BigInteger p = new BigInteger("0");	// 임의의 소수 변수 p
 		BigInteger q = new BigInteger("0");	// 임의의 소수 변수 q
 		BigInteger pi = new BigInteger("0");	// 오일러 파이함수 pi
-		int e = 0;										// 공개키
+		BigInteger e = new BigInteger("0");		// 공개키
 		int d = 0;									// 개인키
 		
 
@@ -38,36 +38,40 @@ public class RSA_4096 {
 				continue;				
 			}
 	
-			// 1. 서로 다른 소수 p, q를 생성한다
 			while(true)
 			{
+				// 서로 다른 소수 p, q를 생성한다
 				p = getRandomPrimeNum();
 				q = getRandomPrimeNum();
 				
-				n = p * q;
-				pi = (p-1)*(q-1);
+				n = p.multiply(q);
+				pi = p.subtract(BigInteger.valueOf(1)).multiply(q.subtract(BigInteger.valueOf(1)));
 				
+				System.out.println("p = " + p);
+				System.out.println("q = " + q);
+				System.out.println("n = " + n);
+				System.out.println("pi = " + pi);
+
 				/*
-				 * 소수 검색 조건
+				 * < 소수 p, q 조건 >
 				 * 1. 두 소수는 서로 같지 않아야 함
 				 * 2. 입력된 메세지 M은 두 소수의 곱 n 보다 작아야 함
 				 * 3. 오일러 파이함수 pi는 개인키의 조건 1< e < pi 이므로, pi는 2 보다 커야함
 				 *     왜냐하면 정수e의 최소값은 2이기 때문에 pi 는 2보다 커야한다
+				 *     (compareTo 함수는 less than 조건에서 -1를 return)
 				 */
-				if(p != q && M < n && pi > 2)
-				{
-					System.out.println("p=" + p + ", q=" + q);
+				if(p.equals(q) || pi.compareTo(BigInteger.valueOf(2)) == -1)		// p, q가 비정상인 경우
+					continue;
+				else
 					break;
-				}
 			}
 			
-			System.out.println("n = " + n);
-			System.out.println("pi = " + pi);
-	
+
+			
 			// 2. 공개키 생성함수 호출
 			e = getPublicKey(pi);
 			System.out.println("e = " + e);		
-
+/*
 			// 3. 개인키 생성함수 호출
 			d = getPrivateKey(e, pi);
 			System.out.println("d = " + d);
@@ -79,83 +83,94 @@ public class RSA_4096 {
 			// 5. 복호화 과정
 			M = getCrypto(C, d, n);
 			System.out.println("복호문 M = " + M);
+			*/
 		}
 		
 		scan.close();
 	}
 	
 	/*
-	 * 두 수를 입력받아 그 사이에 있는 random 값을 return 하는 함수
-	 * 큰 수의 random 값은 nextInt()로 해결 할 수 없기 때문에 nextDouble()을 이용한다.
-	 * 예를 들어, random 값의 검색범위가 2 ~ 100 일때
-	 * random 값 result = 0.2*(100-2) + 2 의 형태로 계산된다.
+	 * < 임의의 소수를 구하는 함수 >
+	 * n의 크기가 4096bit 이므로 p, q의 최대값은 각각 2048bits 이다
+	 * 랜덤값을 2부터 시작해서 랜덤값까지 차례로 1씩 더하면서
+	 * 나눗셈을 시도하여 나머지가 0이 되면 소수가 아니며,
+	 * 0이 아니면서 최종값k와 랜덤값이 같으면 소수가 된다.
 	 */
 	public static BigInteger getRandomPrimeNum()
 	{
-		BigInteger maxint = new BigInteger("2");
-		maxint = maxint.pow(2048);
-		
-		BigInteger result = new BigInteger("0");
-		Random rn = new Random();
-		int k;
-
-		// 소수를 찾을 때까지 반복
 		while(true)
 		{
 			// random 값 선택
-			result = maxint.multiply(BigInteger.valueOf( rn.nextLong()));
+			BigInteger randombigint = new BigInteger(7, new Random());		// 테스트를 위해 2048bits 대신 16bits 사용
+			BigInteger k = new BigInteger("2");
+			BigInteger bigint0 = new BigInteger("0");
+			BigInteger bigint1 = new BigInteger("1");
 
-			// 2부터 차례로 ++ 하여 나누기 시도, 나머지가 0인 경우는 소수가 아님
-			for(k=2; k <= result-1; k++)
+			// 랜덤값이 0, 1인 경우는 다시 while로 감
+			if( randombigint.equals(bigint0) || randombigint.equals(bigint1))
+				continue;
+
+			System.out.println("랜덤값 = " + randombigint);
+				
+			// 소수판별
+			while(true)
 			{
-				if(result%k == 0)		//소수가 아닌 경우 for 반복을 마치고, while로 감
+				// 임의의 수가 k로 나누어진 경우, 즉 나머지가 0인 경우
+				if( randombigint.remainder(k).equals(bigint0) )
 					break;
+				else		// 나누어 지지 않는 경우 1을 더해서 다시 나눗셈을 한다.
+					k=k.add(bigint1);
 			}
 			
-			if(k == result)					// 소수일 경우 return
-				return result;
+			if(randombigint.equals(k))			// 소수일 조건. 랜덤값이 k와 같은 경우
+				return randombigint;
+			else
+				continue;
 		}
 	}
-
+	
 	/*
-	 * 공개키 e 생성함수
+	 * < 공개키 e 생성함수 >
 	 * 공개키 e의 조건은 1 < e < pi 이며 pi 와 서로소인 정수
 	 * 임의의 값을 가지고 서로소인지 확인한 후
 	 * 서로소가 아니면 정수 random_e 를 하나씩 줄여가면 확인
 	 */
-	public static int getPublicKey(int pi)
+	public static BigInteger getPublicKey(BigInteger pi)
 	{
 		// pi 보다 작으면서 pi와 서로 소인 정수 e 선택
 		while(true)
 		{
-			int temp_e = getRandomNum(2, pi);			// 임의의 정수 선택
+			BigInteger temp_e = new BigInteger(pi.bitLength()-1, new Random());			// pi 보다 작은 임의의 정수 선택
+
 			while(true)
 			{
 				// temp_e와 pi 가 서소로인지 판별
-				if(getGCD(pi, temp_e) == 1)
+				if(getGCD(pi, temp_e).equals(BigInteger.valueOf(1)))
 					break;
 				else
-					temp_e--;
+					temp_e = temp_e.subtract(BigInteger.valueOf(1));
 			}
-			if(temp_e > 2)
+			if(temp_e.compareTo(BigInteger.valueOf(2)) == 1)
+			{
+				System.out.println("temp_e = " + temp_e);
 				return temp_e;
+			}
 			else
 				continue;
 		}
 	}
 
 	/*
-	 * 임의의 자연수 생성함수
-	 * 두 수를 입력받아 그 사이에 있는 임의의 정수를 구하는 함수
-	 * getRandomPrimeNum 함수와 동일하며, 소수 확인 조건만 없음
+	 * < 임의의 자연수 생성함수 >
+	 * pi 를 입력받아 그보다 작은 임의의 정수를 return
+	 * 나중에 삭제해도 될것 같음
 	 */
-	public static int getRandomNum(int startNum, int endNum)
+	public static BigInteger getRandomNum(BigInteger pi)
 	{
-		Random rn = new Random();
-		int intRange = endNum - startNum;
+		int bitlength = pi.bitLength();
 		
-		int result = (int)(rn.nextDouble() * intRange + startNum);					// 랜덤하게 매우 큰수의 임의의 값을 구하기
-		return result;
+		System.out.println("bitlength= " + bitlength);
+		return BigInteger.valueOf(bitlength);
 	}	
 
 	/*
@@ -166,62 +181,26 @@ public class RSA_4096 {
 	 * 나머지를 가지고 반복 실행한다.
 	 * 즉, a mod b 연산을 반복한다.
 	 */
-	public static int getGCD(int a, int b)
+	public static BigInteger getGCD(BigInteger a, BigInteger b)
 	{
-		int temp;
-		if(a==b)
+		BigInteger temp = new BigInteger("0");
+		if(a.equals(b))
 			return a;
-		else if(a<b)		// b 가 큰 경우 나누기를 하기 위해 자리 바꿈
+		else if(a.compareTo(b) == -1)		// b 가 큰 경우 나누기를 하기 위해 자리 바꿈
 		{
 			temp = a;
 			a = b;
 			b = temp;
 		}
 		
-		if(b == 0)
+		if(b.equals(BigInteger.valueOf(0)))
 			return a;
-		return getGCD(b, a%b);		
+		return getGCD(b, a.remainder(b));		
 	}
 
 	
-	/*
-	 * 개인키 생성함수
-	 * e*d=1 mod n 계산
-	 * 주어진 e 에 대해서 정수 2부터 차례로 올려가며 mod n 을 계산하여 1이 되는 경우 return
-	 */
-	public static int getPrivateKey(int e, int pi)
-	{
-		int temp_d;
-		
-		for(temp_d=2; temp_d<pi; temp_d++)
-		{
-			if((temp_d*e)%pi == 1)
-				break;
-			else
-				continue;
-		}
-		return temp_d;
-	}
-
-	/*
-	 * 암호화(지수계산) 함수
-	 * 
-	 * 암호화와 복호화가 같은 과정으로 지수-법 계산을 인수만 바꾸어서 사용
-	 * C=M^e mod n
-	 * M=C^d mod n
-	 * 
-	 * result = (result*temp) % n 을 사용한 이유는 modulo 연산에서
-	 * (a*b) mod n = (a mod n * b) mod n = (a * b mod n) mod n = (a mod n * b mod n) mod n 모두 성립하기 때문임
-	 */
-	public static int getCrypto(int Text, int key, int n)
-	{
-		int result = Text;
-		int temp = Text;
-		int i;
-		
-		for(i=1; i< key; i++)
-			result = (result*temp) %n;
-		
-		return result;
-	}
+	
+	
+	
+	
 }
