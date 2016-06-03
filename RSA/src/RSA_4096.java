@@ -101,7 +101,7 @@ public class RSA_4096 {
 		while(true)
 		{
 			// random 값 선택
-			BigInteger randombigint = new BigInteger(7, new Random());		// 테스트를 위해 2048bits 대신 16bits 사용
+			BigInteger randombigint = new BigInteger(8, new Random());		// 테스트를 위해 2048bits 대신 16bits 사용
 			BigInteger k = new BigInteger("2");
 			BigInteger bigint0 = new BigInteger("0");
 			BigInteger bigint1 = new BigInteger("1");
