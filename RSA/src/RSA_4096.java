@@ -7,7 +7,7 @@ import java.sql.Date;
 
 public class RSA_4096 {
 	
-	final static int bitlength = 2048;					// p, q의 bit 크기를 결정하는 상수. **테스트는 32로 하고 나중에 2048로 변경
+	final static int bitlength = 32;					// p, q의 bit 크기를 결정하는 상수. **테스트는 32로 하고 나중에 2048로 변경
 
 	public static void main(String[] args) {
 
@@ -43,11 +43,8 @@ public class RSA_4096 {
 			}
 	
 			// 수행시간을 측정하기 위해 시스템 시간을 출력
-			long time = System.currentTimeMillis();
-			SimpleDateFormat ctime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-			String CurrentTime = ctime.format(new Date(time));
-			System.out.println("시작시간 : " + CurrentTime);
-			
+			printsystime("시작시간");
+
 			while(true)
 			{
 				// 서로 다른 소수 p, q를 생성한다
@@ -77,30 +74,21 @@ public class RSA_4096 {
 			System.out.println("pi = " + pi);
 
 			// p, q, n, pi 를 구한 시간 출력
-			time = System.currentTimeMillis();
-			ctime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-			CurrentTime = ctime.format(new Date(time));
-			System.out.println("p, q를 구한 시간 : " + CurrentTime);
+			printsystime("소수를 구한 시간");
 
 			// 공개키 생성함수 호출
 			e = getPublicKey(pi);
 			System.out.println("e = " + e);		
 
 			// 공개키를 구한 시간 출력
-			time = System.currentTimeMillis();
-			ctime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-			CurrentTime = ctime.format(new Date(time));
-			System.out.println("공개키 구한 시간 : " + CurrentTime);
+			printsystime("공개키 계산시간");
 
 			// 개인키 생성함수 호출
 			d = getPrivateKey(e, pi);
 			System.out.println("d = " + d);
 
 			// 개인키를 구한 시간 출력
-			time = System.currentTimeMillis();
-			ctime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-			CurrentTime = ctime.format(new Date(time));
-			System.out.println("개인키 구한 시간 : " + CurrentTime);
+			printsystime("개인키 계산시간");
 
 			// 암호화 과정
 			C = getCrypto(M, e, n);
@@ -108,20 +96,14 @@ public class RSA_4096 {
 			System.out.println("암호문 C = " + C);
 
 			// 암호화 완료 시간 출력
-			time = System.currentTimeMillis();
-			ctime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-			CurrentTime = ctime.format(new Date(time));
-			System.out.println("암호화 끝난 시간 : " + CurrentTime);
+			printsystime("암호화 시간");
 
 			// 복호화 과정
 			M = getCrypto(C, d, n);
 			System.out.println("복호문 M = " + M);
 			
 			// 복호화 완료 시간 출력
-			time = System.currentTimeMillis();
-			ctime = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
-			CurrentTime = ctime.format(new Date(time));
-			System.out.println("복호화 끝난 시간 : " + CurrentTime);
+			printsystime("복호화 시간");
 		}
 		
 		scan.close();
@@ -131,9 +113,9 @@ public class RSA_4096 {
 	/*
 	 * < 임의의 소수를 구하는 함수 >
 	 * n의 크기가 4096bit 이므로 p, q의 최대값은 각각 2048bits 이다
-	 * 랜덤값을 2부터 시작해서 랜덤값까지 차례로 1씩 더하면서
+	 * 랜덤값을 2부터 시작해서 랜덤값/2 까지 차례로 1씩 더하면서
 	 * 나눗셈을 시도하여 나머지가 0이 되면 소수가 아니며,
-	 * 0이 아니면서 최종값k와 랜덤값이 같으면 소수가 된다.
+	 * 나누어지지 않으면 소수가 된다.
 	 */
 	public static BigInteger getRandomPrimeNum()
 	{
@@ -152,24 +134,25 @@ public class RSA_4096 {
 			// 랜덤값이 0 or 1인 경우는 다시 while로 감
 			if( rndbig.equals(bigint0) || rndbig.equals(bigint1))
 				continue;
+			/* for 4096
 			else
 				return rndbig;
-/*
-			// 소수인지 판별
+			 */
+
+			// 소수 판별 - for 32bits
 			while(true)
 			{
 				// rndhalf가 k로 나누어진 경우, 즉 나머지가 0인 경우
 				if( rndhalf.remainder(k).equals(bigint0) )
 					break;
 				else		// 나누어 지지 않는 경우 1을 더해서 다시 나눗셈을 한다.
-					k=k.add(bigint1);
+					k = k.add(bigint1);
 			}
 			
 			if(rndhalf.equals(k))			// 소수일 조건. 랜덤값이 k와 같은 경우
 				return rndbig;
 			else
 				continue;
-*/
 		}
 	}
 	
@@ -236,7 +219,7 @@ public class RSA_4096 {
 	 */
 	public static BigInteger getPrivateKey(BigInteger e, BigInteger pi)
 	{
-		/*
+		/* for 32bits
 		BigInteger temp_d = new BigInteger("2");
 		
 		while(temp_d.compareTo(pi) == -1)
@@ -248,6 +231,8 @@ public class RSA_4096 {
 		}
 		return temp_d;
 		*/
+		
+		/* for 4096bits */
 		BigInteger temp_d = new BigInteger("2");
 		temp_d = e.modInverse(pi);
 		return temp_d;
@@ -266,7 +251,7 @@ public class RSA_4096 {
 	 */
 	public static BigInteger getCrypto(BigInteger Text, BigInteger key, BigInteger n)
 	{
-		/*
+		/* for 32bits
 		BigInteger result = Text;
 		BigInteger temp = Text;
 		BigInteger i = new BigInteger("1");
@@ -277,8 +262,22 @@ public class RSA_4096 {
 			i = i.add(BigInteger.valueOf(1));
 		}
 		*/
+		
+		// for 4096bits
 		BigInteger result = new BigInteger("0");
 		result = Text.modPow(key, n);
+		
 		return result;
 	}
+	
+	
+	// 속도 측정을 위해 시스템 시간을 출력하는 함수
+	public static void printsystime(String msg)
+	{
+		long time = System.currentTimeMillis();
+		SimpleDateFormat ctime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+		String CurrentTime = ctime.format(new Date(time));
+		System.out.println(msg + " : " + CurrentTime);
+	}
+	
 }
