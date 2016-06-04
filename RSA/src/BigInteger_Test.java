@@ -5,13 +5,11 @@ public class BigInteger_Test {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		BigInteger maxint = new BigInteger("2").pow(5);
+		BigInteger maxint = new BigInteger("3").pow(5);
 		
-		BigInteger randomint = new BigInteger(3, new Random());
+		BigInteger mok = maxint.divide(BigInteger.valueOf(2));
 
-		System.out.println("random=" + randomint);
 		System.out.println("maxint=" + maxint);
-		System.out.println("plus=" + maxint.add(randomint));
+		System.out.println("mok=" + mok);
 	}
-
 }

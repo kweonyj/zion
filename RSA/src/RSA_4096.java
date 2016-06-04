@@ -2,42 +2,52 @@ import java.util.Scanner;
 import java.util.Random;
 import java.math.BigInteger;
 
+import java.text.SimpleDateFormat;
+import java.sql.Date;
+
 public class RSA_4096 {
+	
+	final static int bitlength = 2048;					// p, q의 bit 크기를 결정하는 상수. **테스트는 32로 하고 나중에 2048로 변경
 
 	public static void main(String[] args) {
 
 		// 변수 초기값 설정
-		int M = 0;									// 메세지 평문, M < n 의 조건을 만족해야 함. 테스트로 2-100 사이 정수로 함
-		int C = 0;									// 암호문
-		BigInteger n = new BigInteger("0");		// 4096bits 크기를 갖는 변수 n
-		BigInteger p = new BigInteger("0");	// 임의의 소수 변수 p
-		BigInteger q = new BigInteger("0");	// 임의의 소수 변수 q
-		BigInteger pi = new BigInteger("0");	// 오일러 파이함수 pi
-		BigInteger e = new BigInteger("0");		// 공개키
-		int d = 0;									// 개인키
-		
-
-		Scanner scan = new Scanner(System.in); 
+		BigInteger M = new BigInteger("0");		// 메세지 평문, M < n 의 조건을 만족해야 함. 테스트로 2-100 사이 정수로 함
+		BigInteger C = new BigInteger("0");		// 암호문
+		BigInteger n = new BigInteger("0");			// 4096bits 크기를 갖는 변수 n
+		BigInteger p = new BigInteger("0");		// 2048bits 크기를 갖는 임의의 소수 변수 p
+		BigInteger q = new BigInteger("0");		// 2048bits 크기를 갖는 임의의 소수 변수 q
+		BigInteger pi = new BigInteger("0");		// 오일러 파이함수 pi
+		BigInteger e = new BigInteger("0");			// 공개키
+		BigInteger d = new BigInteger("0");		// 개인키
 
 		// 사용자로 부터 평문 숫자 입력을 받는다.
+		Scanner scan = new Scanner(System.in); 
+
 		while(true)
 		{
 			System.out.println("암호화할 숫자(메세지평문)을 입력하시오.  (종료하려면 0 입력)");
 
-			M = scan.nextInt();		// 평문읽기
+			M = BigInteger.valueOf(scan.nextInt());			// 평문읽기
 
-			if (M == 0)						// 프로그램 종료 조건
+			if (M.equals(BigInteger.valueOf(0)))						// 프로그램 종료 조건
 			{
 				System.out.println("프로그램을 종료합니다.");
 				break;
 			}
 			
-			if(M < 2 || M > 100)		// 메세지 조건범위 검사
+			if(M.compareTo(BigInteger.valueOf(2)) == -1 || M.compareTo(BigInteger.valueOf(100)) == 1)		// 메세지 조건범위 검사
 			{
 				System.out.println("평문메세지 크기가 범위를 벗어났습니다. 다시 입력해 주세요.");
 				continue;				
 			}
 	
+			// 수행시간을 측정하기 위해 시스템 시간을 출력
+			long time = System.currentTimeMillis();
+			SimpleDateFormat ctime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+			String CurrentTime = ctime.format(new Date(time));
+			System.out.println("시작시간 : " + CurrentTime);
+			
 			while(true)
 			{
 				// 서로 다른 소수 p, q를 생성한다
@@ -45,13 +55,8 @@ public class RSA_4096 {
 				q = getRandomPrimeNum();
 				
 				n = p.multiply(q);
-				pi = p.subtract(BigInteger.valueOf(1)).multiply(q.subtract(BigInteger.valueOf(1)));
+				pi = p.subtract(BigInteger.valueOf(1)).multiply(q.subtract(BigInteger.valueOf(1)));			// pi=(p-1)*(q-1)
 				
-				System.out.println("p = " + p);
-				System.out.println("q = " + q);
-				System.out.println("n = " + n);
-				System.out.println("pi = " + pi);
-
 				/*
 				 * < 소수 p, q 조건 >
 				 * 1. 두 소수는 서로 같지 않아야 함
@@ -60,35 +65,69 @@ public class RSA_4096 {
 				 *     왜냐하면 정수e의 최소값은 2이기 때문에 pi 는 2보다 커야한다
 				 *     (compareTo 함수는 less than 조건에서 -1를 return)
 				 */
-				if(p.equals(q) || pi.compareTo(BigInteger.valueOf(2)) == -1)		// p, q가 비정상인 경우
+				if(p.equals(q) || pi.compareTo(BigInteger.valueOf(2)) == -1)		// p, q가 조건을 만족하지 못하는 경우
 					continue;
 				else
 					break;
 			}
 			
+			System.out.println("p = " + p);
+			System.out.println("q = " + q);
+			System.out.println("n = " + n);
+			System.out.println("pi = " + pi);
 
-			
-			// 2. 공개키 생성함수 호출
+			// p, q, n, pi 를 구한 시간 출력
+			time = System.currentTimeMillis();
+			ctime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+			CurrentTime = ctime.format(new Date(time));
+			System.out.println("p, q를 구한 시간 : " + CurrentTime);
+
+			// 공개키 생성함수 호출
 			e = getPublicKey(pi);
 			System.out.println("e = " + e);		
-/*
-			// 3. 개인키 생성함수 호출
+
+			// 공개키를 구한 시간 출력
+			time = System.currentTimeMillis();
+			ctime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+			CurrentTime = ctime.format(new Date(time));
+			System.out.println("공개키 구한 시간 : " + CurrentTime);
+
+			// 개인키 생성함수 호출
 			d = getPrivateKey(e, pi);
 			System.out.println("d = " + d);
-		
-			// 4. 암호화 과정
+
+			// 개인키를 구한 시간 출력
+			time = System.currentTimeMillis();
+			ctime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+			CurrentTime = ctime.format(new Date(time));
+			System.out.println("개인키 구한 시간 : " + CurrentTime);
+
+			// 암호화 과정
 			C = getCrypto(M, e, n);
+			System.out.println("메세지 M = " + M);
 			System.out.println("암호문 C = " + C);
-			
-			// 5. 복호화 과정
+
+			// 암호화 완료 시간 출력
+			time = System.currentTimeMillis();
+			ctime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+			CurrentTime = ctime.format(new Date(time));
+			System.out.println("암호화 끝난 시간 : " + CurrentTime);
+
+			// 복호화 과정
 			M = getCrypto(C, d, n);
 			System.out.println("복호문 M = " + M);
-			*/
+			
+			// 복호화 완료 시간 출력
+			time = System.currentTimeMillis();
+			ctime = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+			CurrentTime = ctime.format(new Date(time));
+			System.out.println("복호화 끝난 시간 : " + CurrentTime);
 		}
 		
 		scan.close();
 	}
 	
+
 	/*
 	 * < 임의의 소수를 구하는 함수 >
 	 * n의 크기가 4096bit 이므로 p, q의 최대값은 각각 2048bits 이다
@@ -101,34 +140,40 @@ public class RSA_4096 {
 		while(true)
 		{
 			// random 값 선택
-			BigInteger randombigint = new BigInteger(8, new Random());		// 테스트를 위해 2048bits 대신 16bits 사용
+			BigInteger rndbig = new BigInteger(bitlength, 16, new Random());		// bitlength bits 크기를 갖는 임의의 소수 생성
 			BigInteger k = new BigInteger("2");
 			BigInteger bigint0 = new BigInteger("0");
 			BigInteger bigint1 = new BigInteger("1");
+			BigInteger bigint2 = new BigInteger("2");
 
-			// 랜덤값이 0, 1인 경우는 다시 while로 감
-			if( randombigint.equals(bigint0) || randombigint.equals(bigint1))
+			// 소수 판별을 위해 랜덤값/2 까지만 조사한다. 홀수인 경우 몫+1까지 조사
+			BigInteger rndhalf = rndbig.divide(bigint2).add(bigint1);
+
+			// 랜덤값이 0 or 1인 경우는 다시 while로 감
+			if( rndbig.equals(bigint0) || rndbig.equals(bigint1))
 				continue;
-
-			System.out.println("랜덤값 = " + randombigint);
-				
-			// 소수판별
+			else
+				return rndbig;
+/*
+			// 소수인지 판별
 			while(true)
 			{
-				// 임의의 수가 k로 나누어진 경우, 즉 나머지가 0인 경우
-				if( randombigint.remainder(k).equals(bigint0) )
+				// rndhalf가 k로 나누어진 경우, 즉 나머지가 0인 경우
+				if( rndhalf.remainder(k).equals(bigint0) )
 					break;
 				else		// 나누어 지지 않는 경우 1을 더해서 다시 나눗셈을 한다.
 					k=k.add(bigint1);
 			}
 			
-			if(randombigint.equals(k))			// 소수일 조건. 랜덤값이 k와 같은 경우
-				return randombigint;
+			if(rndhalf.equals(k))			// 소수일 조건. 랜덤값이 k와 같은 경우
+				return rndbig;
 			else
 				continue;
+*/
 		}
 	}
 	
+
 	/*
 	 * < 공개키 e 생성함수 >
 	 * 공개키 e의 조건은 1 < e < pi 이며 pi 와 서로소인 정수
@@ -142,7 +187,7 @@ public class RSA_4096 {
 		{
 			BigInteger temp_e = new BigInteger(pi.bitLength()-1, new Random());			// pi 보다 작은 임의의 정수 선택
 
-			while(true)
+			while(temp_e.compareTo(BigInteger.valueOf(2)) == 1)								// e 는 2보다 큰 수이어야 함
 			{
 				// temp_e와 pi 가 서소로인지 판별
 				if(getGCD(pi, temp_e).equals(BigInteger.valueOf(1)))
@@ -151,27 +196,12 @@ public class RSA_4096 {
 					temp_e = temp_e.subtract(BigInteger.valueOf(1));
 			}
 			if(temp_e.compareTo(BigInteger.valueOf(2)) == 1)
-			{
-				System.out.println("temp_e = " + temp_e);
 				return temp_e;
-			}
 			else
 				continue;
 		}
 	}
 
-	/*
-	 * < 임의의 자연수 생성함수 >
-	 * pi 를 입력받아 그보다 작은 임의의 정수를 return
-	 * 나중에 삭제해도 될것 같음
-	 */
-	public static BigInteger getRandomNum(BigInteger pi)
-	{
-		int bitlength = pi.bitLength();
-		
-		System.out.println("bitlength= " + bitlength);
-		return BigInteger.valueOf(bitlength);
-	}	
 
 	/*
 	 * 임의의 두 수를 받아 최대공약수를 찾는 함수
@@ -199,8 +229,56 @@ public class RSA_4096 {
 	}
 
 	
+	/*
+	 * 개인키 생성함수
+	 * e*d=1 mod n 계산
+	 * 주어진 e 에 대해서 정수 2부터 차례로 올려가며 mod n 을 계산하여 1이 되는 경우 return
+	 */
+	public static BigInteger getPrivateKey(BigInteger e, BigInteger pi)
+	{
+		/*
+		BigInteger temp_d = new BigInteger("2");
+		
+		while(temp_d.compareTo(pi) == -1)
+		{
+			if(temp_d.multiply(e).remainder(pi).compareTo(BigInteger.valueOf(1)) == 0)
+				break;
+			else
+				temp_d = temp_d.add(BigInteger.valueOf(1));
+		}
+		return temp_d;
+		*/
+		BigInteger temp_d = new BigInteger("2");
+		temp_d = e.modInverse(pi);
+		return temp_d;
+	}
 	
 	
-	
-	
+	/*
+	 * 암호화(지수계산) 함수
+	 * 
+	 * 암호화와 복호화가 같은 과정으로 지수-법 계산을 인수만 바꾸어서 사용
+	 * C=M^e mod n
+	 * M=C^d mod n
+	 * 
+	 * result = (result*temp) % n 을 사용한 이유는 modulo 연산에서
+	 * (a*b) mod n = (a mod n * b) mod n = (a * b mod n) mod n = (a mod n * b mod n) mod n 모두 성립하기 때문임
+	 */
+	public static BigInteger getCrypto(BigInteger Text, BigInteger key, BigInteger n)
+	{
+		/*
+		BigInteger result = Text;
+		BigInteger temp = Text;
+		BigInteger i = new BigInteger("1");
+				
+		while(i.compareTo(key) == -1)
+		{
+			result = result.multiply(temp).remainder(n);
+			i = i.add(BigInteger.valueOf(1));
+		}
+		*/
+		BigInteger result = new BigInteger("0");
+		result = Text.modPow(key, n);
+		return result;
+	}
 }
