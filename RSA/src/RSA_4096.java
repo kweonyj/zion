@@ -84,7 +84,8 @@ public class RSA_4096 {
 			printsystime("공개키 계산시간");
 
 			// 개인키 생성함수 호출
-			d = getPrivateKey(e, pi);
+			//d = getPrivateKey(e, pi);
+			d = Extended_Euclidean(e, pi);
 			System.out.println("d = " + d);
 
 			// 개인키를 구한 시간 출력
@@ -293,6 +294,48 @@ System.out.println("-------------------------------------------------");
 		return result;
 	}
 	
+	
+	/*
+	 *  두 수를 받아서 서로 소인 d를 리턴
+	 */
+	public static BigInteger Extended_Euclidean(BigInteger a, BigInteger b)
+	{
+		BigInteger maxint = b;
+		BigInteger minint = a;
+		BigInteger mok = new BigInteger("0");
+		BigInteger remainder = new BigInteger("0");
+		BigInteger S0 = new BigInteger("1");
+		BigInteger S1 = new BigInteger("0");
+		BigInteger S2 = new BigInteger("0");
+		BigInteger T0 = new BigInteger("0");
+		BigInteger T1 = new BigInteger("1");
+		BigInteger T2 = new BigInteger("0");
+		
+		while(true)
+		{
+			mok = maxint.divide(minint);
+			remainder = maxint.remainder(minint);
+
+			if(remainder.equals(BigInteger.valueOf(0)))
+			{
+				if(T2.compareTo(BigInteger.valueOf(0)) == -1)
+					T2 = b.subtract(T2);
+
+				return T2;
+			}
+			else
+			{
+				S2 = S0.subtract(mok.multiply(S1));
+				T2 = T0.subtract(mok.multiply(T1));
+				maxint = minint;
+				minint = remainder;
+				S0=S1;
+				S1=S2;
+				T0=T1;
+				T1=T2;
+			}
+		}
+	}
 	
 	// 속도 측정을 위해 시스템 시간을 출력하는 함수
 	public static void printsystime(String msg)
