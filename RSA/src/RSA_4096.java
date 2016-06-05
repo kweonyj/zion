@@ -7,7 +7,7 @@ import java.sql.Date;
 
 public class RSA_4096 {
 	
-	final static int bitlength = 32;					// p, q의 bit 크기를 결정하는 상수. **테스트는 32로 하고 나중에 2048로 변경
+	final static int bitlength = 5;					// p, q의 bit 크기를 결정하는 상수. **테스트는 32로 하고 나중에 2048로 변경
 
 	public static void main(String[] args) {
 
@@ -127,10 +127,10 @@ public class RSA_4096 {
 			BigInteger bigint0 = new BigInteger("0");
 			BigInteger bigint1 = new BigInteger("1");
 			BigInteger bigint2 = new BigInteger("2");
-
+System.out.println("rndbig = " + rndbig);
 			// 소수 판별을 위해 랜덤값/2 까지만 조사한다. 홀수인 경우 몫+1까지 조사
 			BigInteger rndhalf = rndbig.divide(bigint2).add(bigint1);
-
+System.out.println("rndhalf = " + rndhalf);
 			// 랜덤값이 0 or 1인 경우는 다시 while로 감
 			if( rndbig.equals(bigint0) || rndbig.equals(bigint1))
 				continue;
@@ -140,15 +140,16 @@ public class RSA_4096 {
 			 */
 
 			// 소수 판별 - for 32bits
-			while(true)
+			while(!rndhalf.equals(k))
 			{
 				// rndhalf가 k로 나누어진 경우, 즉 나머지가 0인 경우
-				if( rndhalf.remainder(k).equals(bigint0) )
+				if( rndbig.remainder(k).equals(bigint0) )
 					break;
 				else		// 나누어 지지 않는 경우 1을 더해서 다시 나눗셈을 한다.
 					k = k.add(bigint1);
 			}
-			
+System.out.println("k = " + k);
+System.out.println("-------------------------------------------------");
 			if(rndhalf.equals(k))			// 소수일 조건. 랜덤값이 k와 같은 경우
 				return rndbig;
 			else
@@ -168,7 +169,7 @@ public class RSA_4096 {
 		// pi 보다 작으면서 pi와 서로 소인 정수 e 선택
 		while(true)
 		{
-			BigInteger temp_e = new BigInteger(pi.bitLength()-1, new Random());			// pi 보다 작은 임의의 정수 선택
+			BigInteger temp_e = new BigInteger(pi.bitLength()-1, new Random());			// pi 보다 작은 임의의 정수 선택. 한비트 적은 수로 한다
 
 			while(temp_e.compareTo(BigInteger.valueOf(2)) == 1)								// e 는 2보다 큰 수이어야 함
 			{
@@ -188,6 +189,7 @@ public class RSA_4096 {
 
 	/*
 	 * 임의의 두 수를 받아 최대공약수를 찾는 함수
+	 * 유클리드 알고리즘을 이용한다
 	 * 두 수(a, b)가 같으면 최대공약수는 a
 	 * GCD를 찾는 구조는 재귀적함수 호출
 	 * 큰수를 작은 수로 나눌때 나머지가 0이면 그 수가 최대공약수가 되며,
@@ -214,12 +216,31 @@ public class RSA_4096 {
 	
 	/*
 	 * 개인키 생성함수
-	 * e*d=1 mod n 계산
-	 * 주어진 e 에 대해서 정수 2부터 차례로 올려가며 mod n 을 계산하여 1이 되는 경우 return
+	 * e*d = 1 mod pi 계산
+	 * 주어진 e 와 pi 는 서로 소 관계에 있으며, pi 는 합성수((p-1)*(q-1))이기 때문에
+	 * 오일러 정의에 의해 e^pi = 1 mod pi 관계에 있다
+	 * 그러므로 d = e^(pi-1) 이다
 	 */
 	public static BigInteger getPrivateKey(BigInteger e, BigInteger pi)
 	{
-		/* for 32bits
+		// pi를 기준으로 k를 1씩 올리면서 계산하는 방법
+		BigInteger temp_d = new BigInteger("0");
+		BigInteger k = new BigInteger("1");
+		BigInteger remainint = temp_d;
+		
+		while(true)
+		{
+			remainint = pi.multiply(k).add(BigInteger.valueOf(1)).remainder(e);		// 나머지 값
+			if(remainint.compareTo(BigInteger.valueOf(0)) == 0)
+				return pi.multiply(k).add(BigInteger.valueOf(1)).divide(e);
+			else
+			{
+				k = k.add(BigInteger.valueOf(1));
+			}
+		}
+		
+
+		/* original - d 값을 1씩 올리면서 계산하는 방법
 		BigInteger temp_d = new BigInteger("2");
 		
 		while(temp_d.compareTo(pi) == -1)
@@ -232,10 +253,12 @@ public class RSA_4096 {
 		return temp_d;
 		*/
 		
-		/* for 4096bits */
+		/* 자바 함수 사용
 		BigInteger temp_d = new BigInteger("2");
 		temp_d = e.modInverse(pi);
 		return temp_d;
+		*/
+		
 	}
 	
 	

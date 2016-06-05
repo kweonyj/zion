@@ -5,11 +5,11 @@ public class BigInteger_Test {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		BigInteger maxint = new BigInteger("3").pow(5);
+		BigInteger maxint = new BigInteger("137").pow(540);
 		
-		BigInteger mok = maxint.divide(BigInteger.valueOf(2));
+		BigInteger moduloint = maxint.remainder(BigInteger.valueOf(540));
 
 		System.out.println("maxint=" + maxint);
-		System.out.println("mok=" + mok);
+		System.out.println("moduloint=" + moduloint);
 	}
 }
