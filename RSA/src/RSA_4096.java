@@ -7,7 +7,7 @@ import java.sql.Date;
 
 public class RSA_4096 {
 	
-	final static int bitlength = 5;					// p, q의 bit 크기를 결정하는 상수. **테스트는 32로 하고 나중에 2048로 변경
+	final static int bitlength = 2048;					// p, q의 bit 크기를 결정하는 상수. **테스트는 32로 하고 나중에 2048로 변경
 
 	public static void main(String[] args) {
 
@@ -84,8 +84,8 @@ public class RSA_4096 {
 			printsystime("공개키 계산시간");
 
 			// 개인키 생성함수 호출
-			//d = getPrivateKey(e, pi);
-			d = Extended_Euclidean(e, pi);
+			d = getPrivateKey(e, pi);
+			//d = Extended_Euclidean(e, pi);
 			System.out.println("d = " + d);
 
 			// 개인키를 구한 시간 출력
@@ -135,12 +135,12 @@ System.out.println("rndhalf = " + rndhalf);
 			// 랜덤값이 0 or 1인 경우는 다시 while로 감
 			if( rndbig.equals(bigint0) || rndbig.equals(bigint1))
 				continue;
-			/* for 4096
+			// for 4096
 			else
 				return rndbig;
-			 */
 
-			// 소수 판별 - for 32bits
+
+			/* 소수 판별 - for 32bits
 			while(!rndhalf.equals(k))
 			{
 				// rndhalf가 k로 나누어진 경우, 즉 나머지가 0인 경우
@@ -153,8 +153,9 @@ System.out.println("k = " + k);
 System.out.println("-------------------------------------------------");
 			if(rndhalf.equals(k))			// 소수일 조건. 랜덤값이 k와 같은 경우
 				return rndbig;
-			else
+			else			
 				continue;
+			*/
 		}
 	}
 	
@@ -218,48 +219,51 @@ System.out.println("-------------------------------------------------");
 	/*
 	 * 개인키 생성함수
 	 * e*d = 1 mod pi 계산
-	 * 주어진 e 와 pi 는 서로 소 관계에 있으며, pi 는 합성수((p-1)*(q-1))이기 때문에
-	 * 오일러 정의에 의해 e^pi = 1 mod pi 관계에 있다
-	 * 그러므로 d = e^(pi-1) 이다
+	 * 주어진 e 와 pi 를 확장 유클리드 알고리즘을 적용해서 linear combination 값을 구한다.
 	 */
 	public static BigInteger getPrivateKey(BigInteger e, BigInteger pi)
 	{
-		// pi를 기준으로 k를 1씩 올리면서 계산하는 방법
-		BigInteger temp_d = new BigInteger("0");
-		BigInteger k = new BigInteger("1");
-		BigInteger remainint = temp_d;
+		BigInteger maxint = pi;
+		BigInteger minint = e;
+		BigInteger mok = new BigInteger("0");
+		BigInteger remainder = new BigInteger("0");
+		BigInteger S0 = new BigInteger("1");
+		BigInteger S1 = new BigInteger("0");
+		BigInteger S2 = new BigInteger("0");
+		BigInteger T0 = new BigInteger("0");
+		BigInteger T1 = new BigInteger("1");
+		BigInteger T2 = new BigInteger("0");
 		
 		while(true)
 		{
-			remainint = pi.multiply(k).add(BigInteger.valueOf(1)).remainder(e);		// 나머지 값
-			if(remainint.compareTo(BigInteger.valueOf(0)) == 0)
-				return pi.multiply(k).add(BigInteger.valueOf(1)).divide(e);
+			mok = maxint.divide(minint);
+			remainder = maxint.remainder(minint);
+
+			if(remainder.equals(BigInteger.valueOf(0)))
+			{
+				if(T2.compareTo(BigInteger.valueOf(0)) == -1)
+					T2 = pi.add(T2);
+
+				return T2;
+			}
 			else
 			{
-				k = k.add(BigInteger.valueOf(1));
+				S2 = S0.subtract(mok.multiply(S1));
+				T2 = T0.subtract(mok.multiply(T1));
+				maxint = minint;
+				minint = remainder;
+				S0=S1;
+				S1=S2;
+				T0=T1;
+				T1=T2;
 			}
 		}
-		
-
-		/* original - d 값을 1씩 올리면서 계산하는 방법
-		BigInteger temp_d = new BigInteger("2");
-		
-		while(temp_d.compareTo(pi) == -1)
-		{
-			if(temp_d.multiply(e).remainder(pi).compareTo(BigInteger.valueOf(1)) == 0)
-				break;
-			else
-				temp_d = temp_d.add(BigInteger.valueOf(1));
-		}
-		return temp_d;
-		*/
 		
 		/* 자바 함수 사용
 		BigInteger temp_d = new BigInteger("2");
 		temp_d = e.modInverse(pi);
 		return temp_d;
 		*/
-		
 	}
 	
 	
@@ -294,48 +298,6 @@ System.out.println("-------------------------------------------------");
 		return result;
 	}
 	
-	
-	/*
-	 *  두 수를 받아서 서로 소인 d를 리턴
-	 */
-	public static BigInteger Extended_Euclidean(BigInteger a, BigInteger b)
-	{
-		BigInteger maxint = b;
-		BigInteger minint = a;
-		BigInteger mok = new BigInteger("0");
-		BigInteger remainder = new BigInteger("0");
-		BigInteger S0 = new BigInteger("1");
-		BigInteger S1 = new BigInteger("0");
-		BigInteger S2 = new BigInteger("0");
-		BigInteger T0 = new BigInteger("0");
-		BigInteger T1 = new BigInteger("1");
-		BigInteger T2 = new BigInteger("0");
-		
-		while(true)
-		{
-			mok = maxint.divide(minint);
-			remainder = maxint.remainder(minint);
-
-			if(remainder.equals(BigInteger.valueOf(0)))
-			{
-				if(T2.compareTo(BigInteger.valueOf(0)) == -1)
-					T2 = b.subtract(T2);
-
-				return T2;
-			}
-			else
-			{
-				S2 = S0.subtract(mok.multiply(S1));
-				T2 = T0.subtract(mok.multiply(T1));
-				maxint = minint;
-				minint = remainder;
-				S0=S1;
-				S1=S2;
-				T0=T1;
-				T1=T2;
-			}
-		}
-	}
 	
 	// 속도 측정을 위해 시스템 시간을 출력하는 함수
 	public static void printsystime(String msg)
