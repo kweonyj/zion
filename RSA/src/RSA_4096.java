@@ -7,7 +7,7 @@ import java.sql.Date;
 
 public class RSA_4096 {
 	
-	final static int bitlength = 16;					// p, q의 bits 크기를 결정하는 상수. n의 크기가 4096이므로 p, q 각각의 값은 2048이 된다.
+	final static int bitlength = 2048;					// p, q의 bits 크기를 결정하는 상수. n의 크기가 4096이므로 p, q 각각의 값은 2048이 된다.
 
 	public static void main(String[] args) {
 
@@ -284,12 +284,18 @@ public class RSA_4096 {
 	 */
 	public static BigInteger getCrypto(BigInteger Text, BigInteger key, BigInteger n)
 	{
-		int [] bitarray = new int[key.bitLength()];				// 각 비트수를 넣기 위한 배열
+		int [] bitarray = new int[key.bitLength()];					// 각 비트수를 넣기 위한 배열
 		int k;
 		
-		BigInteger input_txt = Text;
-		BigInteger return_msg = new BigInteger("1");
-		BigInteger imsi_txt = new BigInteger("1");
+		BigInteger input_msg = Text;								// original input msg
+
+		BigInteger return_msg = new BigInteger("1");			// 최종적으로 반환할 값
+		BigInteger i_mod = new BigInteger("1");					// i 번째 mod 값
+		BigInteger i_prev_mod = new BigInteger("1");					// i-1 번째 mod 값
+		BigInteger i_accom_mod = new BigInteger("1");			// i번째 까지의 mod 값
+		
+		i_mod = input_msg;
+		i_prev_mod = input_msg;
 		BigInteger int2 = new BigInteger("2");
 		BigInteger mok = key;
 
@@ -299,20 +305,19 @@ public class RSA_4096 {
 			bitarray[k] = mok.remainder(BigInteger.valueOf(2)).intValue();
 			mok = mok.divide(BigInteger.valueOf(2));
 
+			if(k>0)
+			{
+				i_mod = i_prev_mod.pow(2).remainder(n);
+				i_prev_mod = i_mod;
+			}
+			
 			if(bitarray[k] == 1)
 			{
-				if(k == 0)
-				{
-					return_msg = input_txt;
-				}
-				
-				else
-				{ 
-					imsi_txt = imsi_txt.pow(int2.pow(k).intValue()).remainder(n);
-					return_msg = return_msg.multiply(imsi_txt).remainder(n);
-				}
+				i_accom_mod = i_accom_mod.multiply(i_mod).remainder(n);
 			}
 		}
+		
+		return_msg = i_accom_mod;
 		
 		/* for 32bits - 순차적 곱셈
 		BigInteger result_msg = Text;
