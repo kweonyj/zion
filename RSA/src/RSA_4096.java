@@ -28,7 +28,7 @@ public class RSA_4096 {
 		{
 			System.out.println("암호화할 숫자(메세지평문)을 입력하시오.  (종료하려면 0 입력)");
 
-			M = BigInteger.valueOf(scan.nextInt());			// 평문읽기
+			M = BigInteger.valueOf(scan.nextInt());					// 평문읽기
 
 			if (M.equals(BigInteger.valueOf(0)))						// 프로그램 종료 조건
 			{
@@ -118,7 +118,7 @@ public class RSA_4096 {
 	 * 나누어지지 않으면 소수가 된다.
 	 * 
 	 * 프로그램 상 소수 판별 프로세스를 작성했으나, 소수가 커질 때는 계산시간이 오래 걸려서
-	 * 자바에서 제공하는 BigInteger 생성함수를 사용했다.
+	 * 자바에서 제공하는 BigInteger 생성함수를 사용함.
 	 * new BigInteger(int bitlength, int certainty, Random rnd) 를 이용
 	 * 여기에서 bitlength는 BigInteger의 bits 크기, certainty는 소수일 확률로서 수치가 높을수록 소수일 확률이 높지만,
 	 * 계산시간이 오래 걸리는 단점이 있다.(1-(1/2)^certainty)
@@ -131,7 +131,7 @@ public class RSA_4096 {
 			BigInteger rndbig = new BigInteger(bitlength, 16, new Random());		// bitlength bits 크기를 갖는 임의의 소수 생성
 			return rndbig;
 
-			/* 소수 판별
+			/* 소수 판별. 전역변수 bitlength = 32 으로 하고 실행하였을 때 6분 45초 소요됨  
 			BigInteger k = new BigInteger("2");
 			BigInteger bigint0 = new BigInteger("0");
 			BigInteger bigint1 = new BigInteger("1");
@@ -140,14 +140,14 @@ public class RSA_4096 {
 			// 소수 판별을 위해 랜덤값/2 까지만 조사한다. rndbig 값이 홀수인 경우 rndhalf+1까지 조사
 			BigInteger rndhalf = rndbig.divide(bigint2).add(bigint1);
 
-			// 랜덤값이 0 or 1인 경우는 다시 while로 감
-			if( rndbig.equals(bigint0) || rndbig.equals(bigint1))
+			// 랜덤값이 0 or 1인 경우와 2로 나누어지는 경우는 소수가 아니므로 다시 while로 감
+			if( rndbig.equals(bigint0) || rndbig.equals(bigint1) || rndbig.remainder(bigint2).equals(bigint0))
 				continue;
 
-			while(!rndhalf.equals(k))			// k의 값이 2부터 rndhalf 까지 반복실행
+			while(!rndhalf.equals(k))			// k의 값이 2부터 rndhalf 까지 반복
 			{
 				// rndhalf가 k로 나누어진 경우, 즉 나머지가 0인 경우
-				if( rndbig.remainder(k).equals(bigint0) )
+				if( rndbig.remainder(k).equals(bigint0))
 					break;
 				else		// 나누어 지지 않는 경우 1을 더해서 다시 나눗셈을 한다.
 					k = k.add(bigint1);
@@ -173,7 +173,7 @@ public class RSA_4096 {
 		// pi 보다 작으면서 pi와 서로 소인 정수 e 선택
 		while(true)
 		{
-			// 임의의 값 e 는 pi 보다 작아야하므로 pi 보다 10 bits 크기가 작은 랜덤값을 구한다.
+			// 임의의 값 e 는 pi 보다 작아야하므로 pi 보다 1 bits 크기가 작은 랜덤값을 구한다.
 			BigInteger temp_e = new BigInteger(pi.bitLength()-1, new Random());
 
 			while(temp_e.compareTo(BigInteger.valueOf(2)) == 1)			// temp_e가 2보다 큰 수인 경우에 반복
@@ -260,11 +260,6 @@ public class RSA_4096 {
 			}
 		}
 
-		/* 자바 modInverse 함수를 사용할 때
-		BigInteger temp_d = new BigInteger("2");
-		temp_d = e.modInverse(pi);
-		return temp_d;
-		*/
 	}
 	
 	
@@ -308,11 +303,6 @@ public class RSA_4096 {
 			if(bitarray[k] == 1)											// 비트값이 1인 경우 누적값의 mod 계산 
 				return_msg= return_msg.multiply(i_mod).remainder(n);
 		}
-		
-		/* java 함수 modPow를 사용하는 경우 
-		BigInteger result_msg = new BigInteger("0");
-		result_msg = Text.modPow(key, n);
-		*/
 		
 		return return_msg;
 	}
