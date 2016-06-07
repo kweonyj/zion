@@ -93,7 +93,6 @@ public class RSA_4096 {
 
 			// 암호화 과정
 			C = getCrypto(M, e, n);
-			System.out.println("메세지 M = " + M);
 			System.out.println("암호문 C = " + C);
 
 			// 암호화 완료 시간 출력
@@ -132,7 +131,7 @@ public class RSA_4096 {
 			BigInteger rndbig = new BigInteger(bitlength, 16, new Random());		// bitlength bits 크기를 갖는 임의의 소수 생성
 			return rndbig;
 
-			/* 소수 판별 - for 32bits
+			/* 소수 판별
 			BigInteger k = new BigInteger("2");
 			BigInteger bigint0 = new BigInteger("0");
 			BigInteger bigint1 = new BigInteger("1");
@@ -279,58 +278,38 @@ public class RSA_4096 {
 	 * result = (result*temp) % n 을 사용한 이유는 modulo 연산에서
 	 * (a*b) mod n = (a mod n * b) mod n = (a * b mod n) mod n = (a mod n * b mod n) mod n 모두 성립하기 때문임
 	 * 
-	 * 구현한 프로그램은 key 값 만큼 반복실행을 하는데, 시간이 오래 걸려
-	 * 자바에서 제공하는 modPow 함수를 이용함.
 	 */
-	public static BigInteger getCrypto(BigInteger Text, BigInteger key, BigInteger n)
+	public static BigInteger getCrypto(BigInteger msg, BigInteger key, BigInteger n)
 	{
-		int [] bitarray = new int[key.bitLength()];					// 각 비트수를 넣기 위한 배열
-		int k;
-		
-		BigInteger input_msg = Text;								// original input msg
+		int [] bitarray = new int[key.bitLength()];			// 각 비트수를 넣기 위한 배열
+		int k;														// 반복문에 사용될 변수
+		BigInteger input_msg = msg;						// original input msg
+		BigInteger return_msg = new BigInteger("1");	// i번째 까지 누적된 값의 mod 값. 최종적으로 반환할 값
+		BigInteger i_mod = new BigInteger("1");			// i 번째 mod 계산값
+		BigInteger i_prev_mod = new BigInteger("1");	// i-1 번째 mod 계산값
+		BigInteger mok = key;									// 주어진 key 값을 이진수로 표현하기 위해 몫을 피제수로 저장하는 변수
+		i_mod = input_msg;									// i=0 일때 초기값 설정
+		i_prev_mod = input_msg;								// i=0 일때 초기값 설정
 
-		BigInteger return_msg = new BigInteger("1");			// 최종적으로 반환할 값
-		BigInteger i_mod = new BigInteger("1");					// i 번째 mod 값
-		BigInteger i_prev_mod = new BigInteger("1");					// i-1 번째 mod 값
-		BigInteger i_accom_mod = new BigInteger("1");			// i번째 까지의 mod 값
-		
-		i_mod = input_msg;
-		i_prev_mod = input_msg;
-		BigInteger int2 = new BigInteger("2");
-		BigInteger mok = key;
-
-		// 각 비트값 계산
 		for(k=0; k<key.bitLength(); k++)
 		{
+			// 각 비트값 계산
 			bitarray[k] = mok.remainder(BigInteger.valueOf(2)).intValue();
 			mok = mok.divide(BigInteger.valueOf(2));
 
-			if(k>0)
+			// i번째 mod 값은 모두 계산을 하고, i번째 비트값이 1이라면 누적된 mod 값을 계산한다.			
+			if(k>0)												// bitarray[1] 부터는 bitarray[0](mod n)^2 (mod n)
 			{
+				// i번째 mod 값 계산 
 				i_mod = i_prev_mod.pow(2).remainder(n);
 				i_prev_mod = i_mod;
 			}
 			
-			if(bitarray[k] == 1)
-			{
-				i_accom_mod = i_accom_mod.multiply(i_mod).remainder(n);
-			}
+			if(bitarray[k] == 1)											// 비트값이 1인 경우 누적값의 mod 계산 
+				return_msg= return_msg.multiply(i_mod).remainder(n);
 		}
 		
-		return_msg = i_accom_mod;
-		
-		/* for 32bits - 순차적 곱셈
-		BigInteger result_msg = Text;
-		BigInteger temp = Text;
-		BigInteger i = new BigInteger("1");
-				
-		while(i.compareTo(key) == -1)
-		{
-			result_msg = result_msg.multiply(temp).remainder(n);
-			i = i.add(BigInteger.valueOf(1));
-		}
-		*/
-		/* for 4096bits java class
+		/* java 함수 modPow를 사용하는 경우 
 		BigInteger result_msg = new BigInteger("0");
 		result_msg = Text.modPow(key, n);
 		*/
@@ -347,5 +326,4 @@ public class RSA_4096 {
 		String CurrentTime = ctime.format(new Date(time));
 		System.out.println(msg + " : " + CurrentTime);
 	}
-	
 }
